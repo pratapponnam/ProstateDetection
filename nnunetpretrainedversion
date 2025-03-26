@@ -1,0 +1,811 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyPGz4/0lrTyxa4jXXRwG6oD",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/pratapponnam/ProstateDetection/blob/main/nnunetpretrainedversion\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 1000
+        },
+        "id": "pxJhybuZ5BC_",
+        "outputId": "1d467892-9132-4f14-9824-5f98fe4f8503"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Collecting nnunet\n",
+            "  Downloading nnunet-1.7.1.tar.gz (276 kB)\n",
+            "\u001b[?25l     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m0.0/276.6 kB\u001b[0m \u001b[31m?\u001b[0m eta \u001b[36m-:--:--\u001b[0m\r\u001b[2K     \u001b[91m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[91m╸\u001b[0m \u001b[32m276.5/276.6 kB\u001b[0m \u001b[31m18.2 MB/s\u001b[0m eta \u001b[36m0:00:01\u001b[0m\r\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m276.6/276.6 kB\u001b[0m \u001b[31m7.0 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25h  Preparing metadata (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "Requirement already satisfied: torch>1.10.0 in /usr/local/lib/python3.11/dist-packages (from nnunet) (2.6.0+cu124)\n",
+            "Requirement already satisfied: tqdm in /usr/local/lib/python3.11/dist-packages (from nnunet) (4.67.1)\n",
+            "Collecting dicom2nifti (from nnunet)\n",
+            "  Downloading dicom2nifti-2.5.1-py3-none-any.whl.metadata (1.3 kB)\n",
+            "Requirement already satisfied: scikit-image>=0.14 in /usr/local/lib/python3.11/dist-packages (from nnunet) (0.25.2)\n",
+            "Collecting medpy (from nnunet)\n",
+            "  Downloading medpy-0.5.2.tar.gz (156 kB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m156.3/156.3 kB\u001b[0m \u001b[31m10.8 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25h  Preparing metadata (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "Requirement already satisfied: scipy in /usr/local/lib/python3.11/dist-packages (from nnunet) (1.14.1)\n",
+            "Collecting batchgenerators>=0.23 (from nnunet)\n",
+            "  Downloading batchgenerators-0.25.1.tar.gz (76 kB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m77.0/77.0 kB\u001b[0m \u001b[31m4.3 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25h  Preparing metadata (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "Requirement already satisfied: numpy in /usr/local/lib/python3.11/dist-packages (from nnunet) (2.0.2)\n",
+            "Requirement already satisfied: scikit-learn in /usr/local/lib/python3.11/dist-packages (from nnunet) (1.6.1)\n",
+            "Collecting SimpleITK (from nnunet)\n",
+            "  Downloading SimpleITK-2.4.1-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.9 kB)\n",
+            "Requirement already satisfied: pandas in /usr/local/lib/python3.11/dist-packages (from nnunet) (2.2.2)\n",
+            "Requirement already satisfied: requests in /usr/local/lib/python3.11/dist-packages (from nnunet) (2.32.3)\n",
+            "Requirement already satisfied: nibabel in /usr/local/lib/python3.11/dist-packages (from nnunet) (5.3.2)\n",
+            "Requirement already satisfied: tifffile in /usr/local/lib/python3.11/dist-packages (from nnunet) (2025.3.13)\n",
+            "Requirement already satisfied: matplotlib in /usr/local/lib/python3.11/dist-packages (from nnunet) (3.10.0)\n",
+            "Requirement already satisfied: pillow>=7.1.2 in /usr/local/lib/python3.11/dist-packages (from batchgenerators>=0.23->nnunet) (11.1.0)\n",
+            "Requirement already satisfied: future in /usr/local/lib/python3.11/dist-packages (from batchgenerators>=0.23->nnunet) (1.0.0)\n",
+            "Collecting unittest2 (from batchgenerators>=0.23->nnunet)\n",
+            "  Downloading unittest2-1.1.0-py2.py3-none-any.whl.metadata (15 kB)\n",
+            "Requirement already satisfied: threadpoolctl in /usr/local/lib/python3.11/dist-packages (from batchgenerators>=0.23->nnunet) (3.6.0)\n",
+            "Requirement already satisfied: networkx>=3.0 in /usr/local/lib/python3.11/dist-packages (from scikit-image>=0.14->nnunet) (3.4.2)\n",
+            "Requirement already satisfied: imageio!=2.35.0,>=2.33 in /usr/local/lib/python3.11/dist-packages (from scikit-image>=0.14->nnunet) (2.37.0)\n",
+            "Requirement already satisfied: packaging>=21 in /usr/local/lib/python3.11/dist-packages (from scikit-image>=0.14->nnunet) (24.2)\n",
+            "Requirement already satisfied: lazy-loader>=0.4 in /usr/local/lib/python3.11/dist-packages (from scikit-image>=0.14->nnunet) (0.4)\n",
+            "Requirement already satisfied: filelock in /usr/local/lib/python3.11/dist-packages (from torch>1.10.0->nnunet) (3.18.0)\n",
+            "Requirement already satisfied: typing-extensions>=4.10.0 in /usr/local/lib/python3.11/dist-packages (from torch>1.10.0->nnunet) (4.12.2)\n",
+            "Requirement already satisfied: jinja2 in /usr/local/lib/python3.11/dist-packages (from torch>1.10.0->nnunet) (3.1.6)\n",
+            "Requirement already satisfied: fsspec in /usr/local/lib/python3.11/dist-packages (from torch>1.10.0->nnunet) (2025.3.0)\n",
+            "Collecting nvidia-cuda-nvrtc-cu12==12.4.127 (from torch>1.10.0->nnunet)\n",
+            "  Downloading nvidia_cuda_nvrtc_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl.metadata (1.5 kB)\n",
+            "Collecting nvidia-cuda-runtime-cu12==12.4.127 (from torch>1.10.0->nnunet)\n",
+            "  Downloading nvidia_cuda_runtime_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl.metadata (1.5 kB)\n",
+            "Collecting nvidia-cuda-cupti-cu12==12.4.127 (from torch>1.10.0->nnunet)\n",
+            "  Downloading nvidia_cuda_cupti_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl.metadata (1.6 kB)\n",
+            "Collecting nvidia-cudnn-cu12==9.1.0.70 (from torch>1.10.0->nnunet)\n",
+            "  Downloading nvidia_cudnn_cu12-9.1.0.70-py3-none-manylinux2014_x86_64.whl.metadata (1.6 kB)\n",
+            "Collecting nvidia-cublas-cu12==12.4.5.8 (from torch>1.10.0->nnunet)\n",
+            "  Downloading nvidia_cublas_cu12-12.4.5.8-py3-none-manylinux2014_x86_64.whl.metadata (1.5 kB)\n",
+            "Collecting nvidia-cufft-cu12==11.2.1.3 (from torch>1.10.0->nnunet)\n",
+            "  Downloading nvidia_cufft_cu12-11.2.1.3-py3-none-manylinux2014_x86_64.whl.metadata (1.5 kB)\n",
+            "Collecting nvidia-curand-cu12==10.3.5.147 (from torch>1.10.0->nnunet)\n",
+            "  Downloading nvidia_curand_cu12-10.3.5.147-py3-none-manylinux2014_x86_64.whl.metadata (1.5 kB)\n",
+            "Collecting nvidia-cusolver-cu12==11.6.1.9 (from torch>1.10.0->nnunet)\n",
+            "  Downloading nvidia_cusolver_cu12-11.6.1.9-py3-none-manylinux2014_x86_64.whl.metadata (1.6 kB)\n",
+            "Collecting nvidia-cusparse-cu12==12.3.1.170 (from torch>1.10.0->nnunet)\n",
+            "  Downloading nvidia_cusparse_cu12-12.3.1.170-py3-none-manylinux2014_x86_64.whl.metadata (1.6 kB)\n",
+            "Requirement already satisfied: nvidia-cusparselt-cu12==0.6.2 in /usr/local/lib/python3.11/dist-packages (from torch>1.10.0->nnunet) (0.6.2)\n",
+            "Requirement already satisfied: nvidia-nccl-cu12==2.21.5 in /usr/local/lib/python3.11/dist-packages (from torch>1.10.0->nnunet) (2.21.5)\n",
+            "Requirement already satisfied: nvidia-nvtx-cu12==12.4.127 in /usr/local/lib/python3.11/dist-packages (from torch>1.10.0->nnunet) (12.4.127)\n",
+            "Collecting nvidia-nvjitlink-cu12==12.4.127 (from torch>1.10.0->nnunet)\n",
+            "  Downloading nvidia_nvjitlink_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl.metadata (1.5 kB)\n",
+            "Requirement already satisfied: triton==3.2.0 in /usr/local/lib/python3.11/dist-packages (from torch>1.10.0->nnunet) (3.2.0)\n",
+            "Requirement already satisfied: sympy==1.13.1 in /usr/local/lib/python3.11/dist-packages (from torch>1.10.0->nnunet) (1.13.1)\n",
+            "Requirement already satisfied: mpmath<1.4,>=1.1.0 in /usr/local/lib/python3.11/dist-packages (from sympy==1.13.1->torch>1.10.0->nnunet) (1.3.0)\n",
+            "Collecting pydicom>=2.2.0 (from dicom2nifti->nnunet)\n",
+            "  Downloading pydicom-3.0.1-py3-none-any.whl.metadata (9.4 kB)\n",
+            "Collecting python-gdcm (from dicom2nifti->nnunet)\n",
+            "  Downloading python_gdcm-3.0.24.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.7 kB)\n",
+            "Requirement already satisfied: contourpy>=1.0.1 in /usr/local/lib/python3.11/dist-packages (from matplotlib->nnunet) (1.3.1)\n",
+            "Requirement already satisfied: cycler>=0.10 in /usr/local/lib/python3.11/dist-packages (from matplotlib->nnunet) (0.12.1)\n",
+            "Requirement already satisfied: fonttools>=4.22.0 in /usr/local/lib/python3.11/dist-packages (from matplotlib->nnunet) (4.56.0)\n",
+            "Requirement already satisfied: kiwisolver>=1.3.1 in /usr/local/lib/python3.11/dist-packages (from matplotlib->nnunet) (1.4.8)\n",
+            "Requirement already satisfied: pyparsing>=2.3.1 in /usr/local/lib/python3.11/dist-packages (from matplotlib->nnunet) (3.2.1)\n",
+            "Requirement already satisfied: python-dateutil>=2.7 in /usr/local/lib/python3.11/dist-packages (from matplotlib->nnunet) (2.8.2)\n",
+            "Requirement already satisfied: importlib-resources>=5.12 in /usr/local/lib/python3.11/dist-packages (from nibabel->nnunet) (6.5.2)\n",
+            "Requirement already satisfied: pytz>=2020.1 in /usr/local/lib/python3.11/dist-packages (from pandas->nnunet) (2025.1)\n",
+            "Requirement already satisfied: tzdata>=2022.7 in /usr/local/lib/python3.11/dist-packages (from pandas->nnunet) (2025.1)\n",
+            "Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.11/dist-packages (from requests->nnunet) (3.4.1)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.11/dist-packages (from requests->nnunet) (3.10)\n",
+            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.11/dist-packages (from requests->nnunet) (2.3.0)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.11/dist-packages (from requests->nnunet) (2025.1.31)\n",
+            "Requirement already satisfied: joblib>=1.2.0 in /usr/local/lib/python3.11/dist-packages (from scikit-learn->nnunet) (1.4.2)\n",
+            "Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.11/dist-packages (from python-dateutil>=2.7->matplotlib->nnunet) (1.17.0)\n",
+            "Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.11/dist-packages (from jinja2->torch>1.10.0->nnunet) (3.0.2)\n",
+            "Collecting argparse (from unittest2->batchgenerators>=0.23->nnunet)\n",
+            "  Downloading argparse-1.4.0-py2.py3-none-any.whl.metadata (2.8 kB)\n",
+            "Collecting traceback2 (from unittest2->batchgenerators>=0.23->nnunet)\n",
+            "  Downloading traceback2-1.4.0-py2.py3-none-any.whl.metadata (1.5 kB)\n",
+            "Collecting linecache2 (from traceback2->unittest2->batchgenerators>=0.23->nnunet)\n",
+            "  Downloading linecache2-1.0.0-py2.py3-none-any.whl.metadata (1000 bytes)\n",
+            "Downloading nvidia_cublas_cu12-12.4.5.8-py3-none-manylinux2014_x86_64.whl (363.4 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m363.4/363.4 MB\u001b[0m \u001b[31m4.0 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading nvidia_cuda_cupti_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl (13.8 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m13.8/13.8 MB\u001b[0m \u001b[31m48.2 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading nvidia_cuda_nvrtc_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl (24.6 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m24.6/24.6 MB\u001b[0m \u001b[31m45.8 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading nvidia_cuda_runtime_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl (883 kB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m883.7/883.7 kB\u001b[0m \u001b[31m29.0 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading nvidia_cudnn_cu12-9.1.0.70-py3-none-manylinux2014_x86_64.whl (664.8 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m664.8/664.8 MB\u001b[0m \u001b[31m1.3 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading nvidia_cufft_cu12-11.2.1.3-py3-none-manylinux2014_x86_64.whl (211.5 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m211.5/211.5 MB\u001b[0m \u001b[31m4.0 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading nvidia_curand_cu12-10.3.5.147-py3-none-manylinux2014_x86_64.whl (56.3 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m56.3/56.3 MB\u001b[0m \u001b[31m12.0 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading nvidia_cusolver_cu12-11.6.1.9-py3-none-manylinux2014_x86_64.whl (127.9 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m127.9/127.9 MB\u001b[0m \u001b[31m6.9 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading nvidia_cusparse_cu12-12.3.1.170-py3-none-manylinux2014_x86_64.whl (207.5 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m207.5/207.5 MB\u001b[0m \u001b[31m6.0 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading nvidia_nvjitlink_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl (21.1 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m21.1/21.1 MB\u001b[0m \u001b[31m62.6 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading dicom2nifti-2.5.1-py3-none-any.whl (43 kB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m43.6/43.6 kB\u001b[0m \u001b[31m3.2 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading SimpleITK-2.4.1-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (52.3 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m52.3/52.3 MB\u001b[0m \u001b[31m10.7 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading pydicom-3.0.1-py3-none-any.whl (2.4 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m2.4/2.4 MB\u001b[0m \u001b[31m55.7 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading python_gdcm-3.0.24.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.1 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m13.1/13.1 MB\u001b[0m \u001b[31m50.1 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading unittest2-1.1.0-py2.py3-none-any.whl (96 kB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m96.4/96.4 kB\u001b[0m \u001b[31m8.5 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading argparse-1.4.0-py2.py3-none-any.whl (23 kB)\n",
+            "Downloading traceback2-1.4.0-py2.py3-none-any.whl (16 kB)\n",
+            "Downloading linecache2-1.0.0-py2.py3-none-any.whl (12 kB)\n",
+            "Building wheels for collected packages: nnunet, batchgenerators, medpy\n",
+            "  Building wheel for nnunet (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for nnunet: filename=nnunet-1.7.1-py3-none-any.whl size=531260 sha256=a28cf1ceebd295e5b44911a4f9ef5abfd8d20a93280ee7fac04dd82caff5e924\n",
+            "  Stored in directory: /root/.cache/pip/wheels/96/24/6f/29ae4df3d7ad633127125dba95ba0e3ef10bfea39da3a0f44c\n",
+            "  Building wheel for batchgenerators (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for batchgenerators: filename=batchgenerators-0.25.1-py3-none-any.whl size=93088 sha256=314dd390a030a4f59e10248e2e78b6af3b007788f84410ac8b85f78ab09b453c\n",
+            "  Stored in directory: /root/.cache/pip/wheels/56/11/c7/fadca30e054c602093ffe36ba8a2f0a87dd2f86ac75191d3ed\n",
+            "  Building wheel for medpy (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for medpy: filename=MedPy-0.5.2-py3-none-any.whl size=224709 sha256=5bce81577e7dbc52de01a2b5baaf91a9e2872a87c8abf44e9a06bc720b667a97\n",
+            "  Stored in directory: /root/.cache/pip/wheels/d4/33/ed/aaac5a347fb8d41679ca515b8f5c49dfdf49be15bdbb9a905d\n",
+            "Successfully built nnunet batchgenerators medpy\n",
+            "Installing collected packages: SimpleITK, linecache2, argparse, traceback2, python-gdcm, pydicom, nvidia-nvjitlink-cu12, nvidia-curand-cu12, nvidia-cufft-cu12, nvidia-cuda-runtime-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-cupti-cu12, nvidia-cublas-cu12, unittest2, nvidia-cusparse-cu12, nvidia-cudnn-cu12, medpy, dicom2nifti, nvidia-cusolver-cu12, batchgenerators, nnunet\n",
+            "  Attempting uninstall: nvidia-nvjitlink-cu12\n",
+            "    Found existing installation: nvidia-nvjitlink-cu12 12.5.82\n",
+            "    Uninstalling nvidia-nvjitlink-cu12-12.5.82:\n",
+            "      Successfully uninstalled nvidia-nvjitlink-cu12-12.5.82\n",
+            "  Attempting uninstall: nvidia-curand-cu12\n",
+            "    Found existing installation: nvidia-curand-cu12 10.3.6.82\n",
+            "    Uninstalling nvidia-curand-cu12-10.3.6.82:\n",
+            "      Successfully uninstalled nvidia-curand-cu12-10.3.6.82\n",
+            "  Attempting uninstall: nvidia-cufft-cu12\n",
+            "    Found existing installation: nvidia-cufft-cu12 11.2.3.61\n",
+            "    Uninstalling nvidia-cufft-cu12-11.2.3.61:\n",
+            "      Successfully uninstalled nvidia-cufft-cu12-11.2.3.61\n",
+            "  Attempting uninstall: nvidia-cuda-runtime-cu12\n",
+            "    Found existing installation: nvidia-cuda-runtime-cu12 12.5.82\n",
+            "    Uninstalling nvidia-cuda-runtime-cu12-12.5.82:\n",
+            "      Successfully uninstalled nvidia-cuda-runtime-cu12-12.5.82\n",
+            "  Attempting uninstall: nvidia-cuda-nvrtc-cu12\n",
+            "    Found existing installation: nvidia-cuda-nvrtc-cu12 12.5.82\n",
+            "    Uninstalling nvidia-cuda-nvrtc-cu12-12.5.82:\n",
+            "      Successfully uninstalled nvidia-cuda-nvrtc-cu12-12.5.82\n",
+            "  Attempting uninstall: nvidia-cuda-cupti-cu12\n",
+            "    Found existing installation: nvidia-cuda-cupti-cu12 12.5.82\n",
+            "    Uninstalling nvidia-cuda-cupti-cu12-12.5.82:\n",
+            "      Successfully uninstalled nvidia-cuda-cupti-cu12-12.5.82\n",
+            "  Attempting uninstall: nvidia-cublas-cu12\n",
+            "    Found existing installation: nvidia-cublas-cu12 12.5.3.2\n",
+            "    Uninstalling nvidia-cublas-cu12-12.5.3.2:\n",
+            "      Successfully uninstalled nvidia-cublas-cu12-12.5.3.2\n",
+            "  Attempting uninstall: nvidia-cusparse-cu12\n",
+            "    Found existing installation: nvidia-cusparse-cu12 12.5.1.3\n",
+            "    Uninstalling nvidia-cusparse-cu12-12.5.1.3:\n",
+            "      Successfully uninstalled nvidia-cusparse-cu12-12.5.1.3\n",
+            "  Attempting uninstall: nvidia-cudnn-cu12\n",
+            "    Found existing installation: nvidia-cudnn-cu12 9.3.0.75\n",
+            "    Uninstalling nvidia-cudnn-cu12-9.3.0.75:\n",
+            "      Successfully uninstalled nvidia-cudnn-cu12-9.3.0.75\n",
+            "  Attempting uninstall: nvidia-cusolver-cu12\n",
+            "    Found existing installation: nvidia-cusolver-cu12 11.6.3.83\n",
+            "    Uninstalling nvidia-cusolver-cu12-11.6.3.83:\n",
+            "      Successfully uninstalled nvidia-cusolver-cu12-11.6.3.83\n",
+            "Successfully installed SimpleITK-2.4.1 argparse-1.4.0 batchgenerators-0.25.1 dicom2nifti-2.5.1 linecache2-1.0.0 medpy-0.5.2 nnunet-1.7.1 nvidia-cublas-cu12-12.4.5.8 nvidia-cuda-cupti-cu12-12.4.127 nvidia-cuda-nvrtc-cu12-12.4.127 nvidia-cuda-runtime-cu12-12.4.127 nvidia-cudnn-cu12-9.1.0.70 nvidia-cufft-cu12-11.2.1.3 nvidia-curand-cu12-10.3.5.147 nvidia-cusolver-cu12-11.6.1.9 nvidia-cusparse-cu12-12.3.1.170 nvidia-nvjitlink-cu12-12.4.127 pydicom-3.0.1 python-gdcm-3.0.24.1 traceback2-1.4.0 unittest2-1.1.0\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "application/vnd.colab-display-data+json": {
+              "pip_warning": {
+                "packages": [
+                  "argparse"
+                ]
+              },
+              "id": "28c455133cb54ec19dc0b91e889a9b22"
+            }
+          },
+          "metadata": {}
+        }
+      ],
+      "source": [
+        "!pip install nnunet"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "kqvHLkjN7vRu",
+        "outputId": "af4e6bd2-374e-4a10-e3c6-9fd80944b6d7"
+      },
+      "execution_count": 1,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Looking in indexes: https://download.pytorch.org/whl/cu118\n",
+            "Requirement already satisfied: torch in /usr/local/lib/python3.11/dist-packages (2.6.0+cu124)\n",
+            "Requirement already satisfied: torchvision in /usr/local/lib/python3.11/dist-packages (0.21.0+cu124)\n",
+            "Requirement already satisfied: torchaudio in /usr/local/lib/python3.11/dist-packages (2.6.0+cu124)\n",
+            "Requirement already satisfied: filelock in /usr/local/lib/python3.11/dist-packages (from torch) (3.18.0)\n",
+            "Requirement already satisfied: typing-extensions>=4.10.0 in /usr/local/lib/python3.11/dist-packages (from torch) (4.12.2)\n",
+            "Requirement already satisfied: networkx in /usr/local/lib/python3.11/dist-packages (from torch) (3.4.2)\n",
+            "Requirement already satisfied: jinja2 in /usr/local/lib/python3.11/dist-packages (from torch) (3.1.6)\n",
+            "Requirement already satisfied: fsspec in /usr/local/lib/python3.11/dist-packages (from torch) (2025.3.0)\n",
+            "Requirement already satisfied: nvidia-cuda-nvrtc-cu12==12.4.127 in /usr/local/lib/python3.11/dist-packages (from torch) (12.4.127)\n",
+            "Requirement already satisfied: nvidia-cuda-runtime-cu12==12.4.127 in /usr/local/lib/python3.11/dist-packages (from torch) (12.4.127)\n",
+            "Requirement already satisfied: nvidia-cuda-cupti-cu12==12.4.127 in /usr/local/lib/python3.11/dist-packages (from torch) (12.4.127)\n",
+            "Requirement already satisfied: nvidia-cudnn-cu12==9.1.0.70 in /usr/local/lib/python3.11/dist-packages (from torch) (9.1.0.70)\n",
+            "Requirement already satisfied: nvidia-cublas-cu12==12.4.5.8 in /usr/local/lib/python3.11/dist-packages (from torch) (12.4.5.8)\n",
+            "Requirement already satisfied: nvidia-cufft-cu12==11.2.1.3 in /usr/local/lib/python3.11/dist-packages (from torch) (11.2.1.3)\n",
+            "Requirement already satisfied: nvidia-curand-cu12==10.3.5.147 in /usr/local/lib/python3.11/dist-packages (from torch) (10.3.5.147)\n",
+            "Requirement already satisfied: nvidia-cusolver-cu12==11.6.1.9 in /usr/local/lib/python3.11/dist-packages (from torch) (11.6.1.9)\n",
+            "Requirement already satisfied: nvidia-cusparse-cu12==12.3.1.170 in /usr/local/lib/python3.11/dist-packages (from torch) (12.3.1.170)\n",
+            "Requirement already satisfied: nvidia-cusparselt-cu12==0.6.2 in /usr/local/lib/python3.11/dist-packages (from torch) (0.6.2)\n",
+            "Requirement already satisfied: nvidia-nccl-cu12==2.21.5 in /usr/local/lib/python3.11/dist-packages (from torch) (2.21.5)\n",
+            "Requirement already satisfied: nvidia-nvtx-cu12==12.4.127 in /usr/local/lib/python3.11/dist-packages (from torch) (12.4.127)\n",
+            "Requirement already satisfied: nvidia-nvjitlink-cu12==12.4.127 in /usr/local/lib/python3.11/dist-packages (from torch) (12.4.127)\n",
+            "Requirement already satisfied: triton==3.2.0 in /usr/local/lib/python3.11/dist-packages (from torch) (3.2.0)\n",
+            "Requirement already satisfied: sympy==1.13.1 in /usr/local/lib/python3.11/dist-packages (from torch) (1.13.1)\n",
+            "Requirement already satisfied: mpmath<1.4,>=1.1.0 in /usr/local/lib/python3.11/dist-packages (from sympy==1.13.1->torch) (1.3.0)\n",
+            "Requirement already satisfied: numpy in /usr/local/lib/python3.11/dist-packages (from torchvision) (2.0.2)\n",
+            "Requirement already satisfied: pillow!=8.3.*,>=5.3.0 in /usr/local/lib/python3.11/dist-packages (from torchvision) (11.1.0)\n",
+            "Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.11/dist-packages (from jinja2->torch) (3.0.2)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "ojk5vOWP7zXL",
+        "outputId": "56246987-5e72-40d5-ae7d-15cca7326010"
+      },
+      "execution_count": 2,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Mounted at /content/drive\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "import subprocess\n",
+        "\n",
+        "# Define paths\n",
+        "os.environ[\"nnUNet_raw\"] = \"/content/drive/MyDrive/nnUNet_raw\"\n",
+        "os.environ[\"nnUNet_preprocessed\"] = \"/content/drive/MyDrive/nnUNet_preprocessed\"\n",
+        "os.environ[\"nnUNet_results\"] = \"/content/drive/MyDrive/nnUNet_results\"\n",
+        "\n",
+        "# Verify environment variables\n",
+        "print(\"[INFO] Environment Variables Set:\")\n",
+        "print(\"nnUNet_raw:\", os.environ.get(\"nnUNet_raw\"))\n",
+        "print(\"nnUNet_preprocessed:\", os.environ.get(\"nnUNet_preprocessed\"))\n",
+        "print(\"nnUNet_results:\", os.environ.get(\"nnUNet_results\"))\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "e6LTmtWn9aXR",
+        "outputId": "b529a935-6e57-4d88-bac3-4e116deaabc2"
+      },
+      "execution_count": 5,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "[INFO] Environment Variables Set:\n",
+            "nnUNet_raw: /content/drive/MyDrive/nnUNet_raw\n",
+            "nnUNet_preprocessed: /content/drive/MyDrive/nnUNet_preprocessed\n",
+            "nnUNet_results: /content/drive/MyDrive/nnUNet_results\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "import subprocess\n",
+        "\n",
+        "# Set nnUNet_raw_data_base to the correct path\n",
+        "os.environ['nnUNet_raw_data_base'] = '/content/drive/MyDrive/latest_nnunet/nnUNet_raw'  # Adjust path as needed\n",
+        "\n",
+        "# Function to convert dataset to nnUNet format\n",
+        "def convert_dataset(dataset_path):\n",
+        "    \"\"\"Converts the dataset to nnUNet format.\"\"\"\n",
+        "    # Ensure the nnUNet_raw_data_base environment variable is set\n",
+        "    if 'nnUNet_raw_data_base' not in os.environ:\n",
+        "        print(\"[ERROR] nnUNet_raw_data_base is not set.\")\n",
+        "        return\n",
+        "\n",
+        "    # Run the dataset conversion command\n",
+        "    command = f\"nnUNet_convert_decathlon_task -i {dataset_path}\"\n",
+        "    process = subprocess.run(command, shell=True, capture_output=True, text=True)\n",
+        "\n",
+        "    if process.stderr:\n",
+        "        print(f\"[ERROR] Dataset conversion failed: {process.stderr}\")\n",
+        "        return\n",
+        "\n",
+        "    print(\"[INFO] Dataset conversion successful!\")\n",
+        "\n",
+        "# Example: Convert dataset to nnU-Net format\n",
+        "dataset_path = \"/content/drive/MyDrive/latest_nnunet/Task05_Prostate/Task05_Prostate\"  # Replace with correct path\n",
+        "convert_dataset(dataset_path)\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "q8pV1Bqp7c7t",
+        "outputId": "f583d4cb-8362-4739-ba6a-ff3135c89312"
+      },
+      "execution_count": 8,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "[INFO] Dataset conversion successful!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Set the RESULTS_FOLDER environment variable\n",
+        "os.environ['RESULTS_FOLDER'] = '/content/drive/MyDrive/nnUNet_trained_models'  # Adjust path as needed\n",
+        "\n",
+        "# Verify that the environment variable is set correctly\n",
+        "print(\"RESULTS_FOLDER:\", os.getenv('RESULTS_FOLDER'))\n",
+        "\n",
+        "def download_pretrained_model():\n",
+        "    \"\"\"Downloads the pretrained model for Task 005 Prostate.\"\"\"\n",
+        "    command = \"nnUNet_download_pretrained_model Task005_Prostate\"\n",
+        "    process = subprocess.run(command, shell=True, capture_output=True, text=True)\n",
+        "\n",
+        "    if process.stderr:\n",
+        "        print(f\"[ERROR] Downloading pretrained model failed: {process.stderr}\")\n",
+        "        return\n",
+        "\n",
+        "    print(\"[INFO] Pretrained model downloaded successfully!\")\n",
+        "\n",
+        "# Example: Download pretrained model for Task 005 Prostate\n",
+        "download_pretrained_model()\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "a4prAZz3-wri",
+        "outputId": "bf7c6a40-d1ac-407e-bd66-828a5a25d077"
+      },
+      "execution_count": 10,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "RESULTS_FOLDER: /content/drive/MyDrive/nnUNet_trained_models\n",
+            "[ERROR] Downloading pretrained model failed: Traceback (most recent call last):\n",
+            "  File \"/usr/local/bin/nnUNet_download_pretrained_model\", line 8, in <module>\n",
+            "    sys.exit(download_by_name())\n",
+            "             ^^^^^^^^^^^^^^^^^^\n",
+            "  File \"/usr/local/lib/python3.11/dist-packages/nnunet/inference/pretrained_models/download_pretrained_model.py\", line 344, in download_by_name\n",
+            "    download_and_install_pretrained_model_by_name(taskname)\n",
+            "  File \"/usr/local/lib/python3.11/dist-packages/nnunet/inference/pretrained_models/download_pretrained_model.py\", line 260, in download_and_install_pretrained_model_by_name\n",
+            "    download_and_install_from_url(url)\n",
+            "  File \"/usr/local/lib/python3.11/dist-packages/nnunet/inference/pretrained_models/download_pretrained_model.py\", line 288, in download_and_install_from_url\n",
+            "    raise e\n",
+            "  File \"/usr/local/lib/python3.11/dist-packages/nnunet/inference/pretrained_models/download_pretrained_model.py\", line 283, in download_and_install_from_url\n",
+            "    download_file(url=url, local_filename=tempfile, chunk_size=8192 * 16)\n",
+            "  File \"/usr/local/lib/python3.11/dist-packages/nnunet/inference/pretrained_models/download_pretrained_model.py\", line 299, in download_file\n",
+            "    r.raise_for_status()\n",
+            "  File \"/usr/local/lib/python3.11/dist-packages/requests/models.py\", line 1024, in raise_for_status\n",
+            "    raise HTTPError(http_error_msg, response=self)\n",
+            "requests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://zenodo.org/record/4485926/files/Task005_Prostate.zip?download=1\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# If you manually download the model, unzip it and move to the correct folder\n",
+        "import shutil\n",
+        "\n",
+        "# Specify the path where the downloaded model is located\n",
+        "downloaded_model_path = '/content/drive/MyDrive/latest_nnunet/Task005_Prostate.zip'\n",
+        "destination_path = '/content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/'\n",
+        "\n",
+        "# Unzip the model if it's in zip format\n",
+        "shutil.unpack_archive(downloaded_model_path, destination_path)\n",
+        "\n",
+        "print(\"[INFO] Model downloaded and unzipped successfully!\")\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "tYh9UNvfDV4D",
+        "outputId": "15c9063f-57d6-4ac3-c176-b97e9205c8be"
+      },
+      "execution_count": 29,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "[INFO] Model downloaded and unzipped successfully!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import subprocess\n",
+        "\n",
+        "def print_pretrained_model_info(task_name):\n",
+        "    \"\"\"Print information about the pretrained model using nnUNet.\"\"\"\n",
+        "    command = f\"nnUNet_print_pretrained_model_info {task_name}\"\n",
+        "    process = subprocess.run(command, shell=True, capture_output=True, text=True)\n",
+        "\n",
+        "    if process.stderr:\n",
+        "        print(f\"[ERROR] Failed to print pretrained model info: {process.stderr}\")\n",
+        "    else:\n",
+        "        print(\"[INFO] Pretrained model info:\\n\", process.stdout)\n",
+        "\n",
+        "# Example: Print info for Task005_Prostate pretrained model\n",
+        "print_pretrained_model_info(\"Task005_Prostate\")\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "cLrkyhINE2Ek",
+        "outputId": "46b178cc-c52d-4e2a-e7c3-cec161109e37"
+      },
+      "execution_count": 21,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "[INFO] Pretrained model info:\n",
+            " \n",
+            "\n",
+            "Please cite the following paper when using nnUNet:\n",
+            "\n",
+            "Isensee, F., Jaeger, P.F., Kohl, S.A.A. et al. \"nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation.\" Nat Methods (2020). https://doi.org/10.1038/s41592-020-01008-z\n",
+            "\n",
+            "\n",
+            "If you have questions or suggestions, feel free to open an issue at https://github.com/MIC-DKFZ/nnUNet\n",
+            "\n",
+            "Prostate Segmentation. \n",
+            "Segmentation targets are peripheral and central zone, \n",
+            "Input modalities are 0: T2, 1: ADC. \n",
+            "Also see Medical Segmentation Decathlon, http://medicaldecathlon.com/\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import subprocess\n",
+        "\n",
+        "def test_model_inference(input_directory, output_directory, task_name):\n",
+        "    \"\"\"Test the pretrained model by running inference on a sample image.\"\"\"\n",
+        "    command = f\"nnUNet_predict -i {input_directory} -o {output_directory} -t {task_name} -m 3d_fullres\"\n",
+        "    process = subprocess.run(command, shell=True, capture_output=True, text=True)\n",
+        "\n",
+        "    if process.stderr:\n",
+        "        print(f\"[ERROR] Inference failed: {process.stderr}\")\n",
+        "    else:\n",
+        "        print(\"[INFO] Inference completed successfully!\")\n",
+        "        print(process.stdout)\n",
+        "\n",
+        "# Example: Test inference for Task005_Prostate\n",
+        "input_directory = \"/content/drive/MyDrive/latest_nnunet/nnUNet_raw/nnUNet_raw_data/Task005_Prostate/imagesTs\"\n",
+        "output_directory = \"/content/drive/MyDrive/latest_nnunet/nnUNet_inference_output\"\n",
+        "test_model_inference(input_directory, output_directory, task_name=5)\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "WloZiAFFFPob",
+        "outputId": "be252811-036d-453f-9556-aeced4886c52"
+      },
+      "execution_count": 31,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "[ERROR] Inference failed: Traceback (most recent call last):\n",
+            "  File \"/usr/local/bin/nnUNet_predict\", line 8, in <module>\n",
+            "    sys.exit(main())\n",
+            "             ^^^^^^\n",
+            "  File \"/usr/local/lib/python3.11/dist-packages/nnunet/inference/predict_simple.py\", line 216, in main\n",
+            "    assert isdir(model_folder_name), \"model output folder not found. Expected: %s\" % model_folder_name\n",
+            "           ^^^^^^^^^^^^^^^^^^^^^^^^\n",
+            "AssertionError: model output folder not found. Expected: /content/drive/MyDrive/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "kYpdqemYbjD2"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "\n",
+        "def check_model_directory(model_directory):\n",
+        "    \"\"\"Verify if the pretrained model directory exists and contains the required files.\"\"\"\n",
+        "    if os.path.exists(model_directory):\n",
+        "        print(f\"[INFO] Model directory found: {model_directory}\")\n",
+        "        required_files = [\"plans.pkl\", \"model_final_checkpoint.model\"]  # Example files\n",
+        "        missing_files = [f for f in required_files if not os.path.exists(os.path.join(model_directory, f))]\n",
+        "        if not missing_files:\n",
+        "            print(\"[INFO] All required model files are present.\")\n",
+        "        else:\n",
+        "            print(f\"[ERROR] Missing model files: {missing_files}\")\n",
+        "    else:\n",
+        "        print(f\"[ERROR] Model directory does not exist: {model_directory}\")\n",
+        "\n",
+        "# Example: Check model directory\n",
+        "model_directory = \"/content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1\"\n",
+        "check_model_directory(model_directory)\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "YRZb0x59IhK-",
+        "outputId": "c4dad140-24dc-4a0b-cdde-8cb8535a6727"
+      },
+      "execution_count": 34,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "[INFO] Model directory found: /content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1\n",
+            "[INFO] All required model files are present.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "\n",
+        "def list_directory_contents(model_directory):\n",
+        "    \"\"\"List the contents of the model directory.\"\"\"\n",
+        "    if os.path.exists(model_directory):\n",
+        "        print(f\"[INFO] Listing contents of model directory: {model_directory}\")\n",
+        "        for root, dirs, files in os.walk(model_directory):\n",
+        "            print(f\"Found directory: {root}\")\n",
+        "            for file in files:\n",
+        "                print(f\"  File: {file}\")\n",
+        "    else:\n",
+        "        print(f\"[ERROR] Model directory does not exist: {model_directory}\")\n",
+        "\n",
+        "# Example: List contents of model directory\n",
+        "model_directory = \"/content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1\"\n",
+        "list_directory_contents(model_directory)\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "2RZXTukVYiRi",
+        "outputId": "5d63ab8e-d82e-4078-bca1-f7e22a06c472"
+      },
+      "execution_count": 35,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "[INFO] Listing contents of model directory: /content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1\n",
+            "Found directory: /content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1\n",
+            "  File: plans.pkl\n",
+            "  File: postprocessing.json\n",
+            "  File: model_final_checkpoint.model\n",
+            "Found directory: /content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1/fold_0\n",
+            "  File: debug.json\n",
+            "  File: model_final_checkpoint.model\n",
+            "  File: model_final_checkpoint.model.pkl\n",
+            "  File: progress.png\n",
+            "  File: network_architecture.pdf\n",
+            "Found directory: /content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1/fold_1\n",
+            "  File: debug.json\n",
+            "  File: model_final_checkpoint.model\n",
+            "  File: model_final_checkpoint.model.pkl\n",
+            "  File: progress.png\n",
+            "  File: network_architecture.pdf\n",
+            "Found directory: /content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1/fold_2\n",
+            "  File: debug.json\n",
+            "  File: model_final_checkpoint.model\n",
+            "  File: model_final_checkpoint.model.pkl\n",
+            "  File: progress.png\n",
+            "  File: network_architecture.pdf\n",
+            "Found directory: /content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1/fold_3\n",
+            "  File: debug.json\n",
+            "  File: model_final_checkpoint.model\n",
+            "  File: model_final_checkpoint.model.pkl\n",
+            "  File: progress.png\n",
+            "  File: network_architecture.pdf\n",
+            "Found directory: /content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1/fold_4\n",
+            "  File: debug.json\n",
+            "  File: model_final_checkpoint.model\n",
+            "  File: model_final_checkpoint.model.pkl\n",
+            "  File: progress.png\n",
+            "  File: network_architecture.pdf\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import torch\n",
+        "from nnunet.training.model_restore import load_model_and_checkpoint_files\n",
+        "\n",
+        "# Manually load the model\n",
+        "model, checkpoint = load_model_and_checkpoint_files(model_directory)\n",
+        "\n",
+        "print(f\"[INFO] Model loaded successfully!\")\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 584
+        },
+        "id": "WzdLmdxIYm1b",
+        "outputId": "5b3506a5-4063-49e1-9420-399342b2aa0a"
+      },
+      "execution_count": 36,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\n",
+            "\n",
+            "Please cite the following paper when using nnUNet:\n",
+            "\n",
+            "Isensee, F., Jaeger, P.F., Kohl, S.A.A. et al. \"nnU-Net: a self-configuring method for deep learning-based biomedical image segmentation.\" Nat Methods (2020). https://doi.org/10.1038/s41592-020-01008-z\n",
+            "\n",
+            "\n",
+            "If you have questions or suggestions, feel free to open an issue at https://github.com/MIC-DKFZ/nnUNet\n",
+            "\n",
+            "folds is None so we will automatically look for output folders (not using 'all'!)\n",
+            "found the following folds:  ['/content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1/fold_0', '/content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1/fold_1', '/content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1/fold_2', '/content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1/fold_3', '/content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1/fold_4']\n"
+          ]
+        },
+        {
+          "output_type": "error",
+          "ename": "FileNotFoundError",
+          "evalue": "[Errno 2] No such file or directory: '/content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1/fold_0/model_best.model.pkl'",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mFileNotFoundError\u001b[0m                         Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-36-37105745bd50>\u001b[0m in \u001b[0;36m<cell line: 0>\u001b[0;34m()\u001b[0m\n\u001b[1;32m      3\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      4\u001b[0m \u001b[0;31m# Manually load the model\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 5\u001b[0;31m \u001b[0mmodel\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mcheckpoint\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mload_model_and_checkpoint_files\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mmodel_directory\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m      6\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      7\u001b[0m \u001b[0mprint\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34mf\"[INFO] Model loaded successfully!\"\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.11/dist-packages/nnunet/training/model_restore.py\u001b[0m in \u001b[0;36mload_model_and_checkpoint_files\u001b[0;34m(folder, folds, mixed_precision, checkpoint_name)\u001b[0m\n\u001b[1;32m    138\u001b[0m         \u001b[0;32mraise\u001b[0m \u001b[0mValueError\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m\"Unknown value for folds. Type: %s. Expected: list of int, int, str or None\"\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mstr\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mtype\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mfolds\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    139\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 140\u001b[0;31m     \u001b[0mtrainer\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mrestore_model\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mjoin\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mfolds\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;36m0\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m\"%s.model.pkl\"\u001b[0m \u001b[0;34m%\u001b[0m \u001b[0mcheckpoint_name\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mfp16\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mmixed_precision\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    141\u001b[0m     \u001b[0mtrainer\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0moutput_folder\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mfolder\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    142\u001b[0m     \u001b[0mtrainer\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0moutput_folder_base\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mfolder\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.11/dist-packages/nnunet/training/model_restore.py\u001b[0m in \u001b[0;36mrestore_model\u001b[0;34m(pkl_file, checkpoint, train, fp16)\u001b[0m\n\u001b[1;32m     54\u001b[0m     \u001b[0;34m:\u001b[0m\u001b[0;32mreturn\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     55\u001b[0m     \"\"\"\n\u001b[0;32m---> 56\u001b[0;31m     \u001b[0minfo\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mload_pickle\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mpkl_file\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m     57\u001b[0m     \u001b[0minit\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0minfo\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'init'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     58\u001b[0m     \u001b[0mname\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0minfo\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'name'\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.11/dist-packages/batchgenerators/utilities/file_and_folder_operations.py\u001b[0m in \u001b[0;36mload_pickle\u001b[0;34m(file, mode)\u001b[0m\n\u001b[1;32m     90\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     91\u001b[0m \u001b[0;32mdef\u001b[0m \u001b[0mload_pickle\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mfile\u001b[0m\u001b[0;34m:\u001b[0m \u001b[0mstr\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mmode\u001b[0m\u001b[0;34m:\u001b[0m \u001b[0mstr\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0;34m'rb'\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m---> 92\u001b[0;31m     \u001b[0;32mwith\u001b[0m \u001b[0mopen\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mfile\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mmode\u001b[0m\u001b[0;34m)\u001b[0m \u001b[0;32mas\u001b[0m \u001b[0mf\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m     93\u001b[0m         \u001b[0ma\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mpickle\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mload\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mf\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     94\u001b[0m     \u001b[0;32mreturn\u001b[0m \u001b[0ma\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mFileNotFoundError\u001b[0m: [Errno 2] No such file or directory: '/content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1/fold_0/model_best.model.pkl'"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model_directory_fold_0 = \"/content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1/fold_0\"\n",
+        "model, checkpoint = load_model_and_checkpoint_files(model_directory_fold_0)\n",
+        "print(\"[INFO] Model loaded successfully from fold_0!\")\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 332
+        },
+        "id": "3IRzZE6tZODh",
+        "outputId": "56028277-a488-4d87-b91d-b72391911b00"
+      },
+      "execution_count": 37,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "folds is None so we will automatically look for output folders (not using 'all'!)\n",
+            "found the following folds:  []\n"
+          ]
+        },
+        {
+          "output_type": "error",
+          "ename": "IndexError",
+          "evalue": "list index out of range",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mIndexError\u001b[0m                                Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-37-64ad4b19fcef>\u001b[0m in \u001b[0;36m<cell line: 0>\u001b[0;34m()\u001b[0m\n\u001b[1;32m      1\u001b[0m \u001b[0mmodel_directory_fold_0\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0;34m\"/content/drive/MyDrive/latest_nnunet/nnUNet_trained_models/nnUNet/3d_fullres/Task005_Prostate/nnUNetTrainerV2__nnUNetPlansv2.1/fold_0\"\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 2\u001b[0;31m \u001b[0mmodel\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mcheckpoint\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mload_model_and_checkpoint_files\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mmodel_directory_fold_0\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m      3\u001b[0m \u001b[0mprint\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m\"[INFO] Model loaded successfully from fold_0!\"\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.11/dist-packages/nnunet/training/model_restore.py\u001b[0m in \u001b[0;36mload_model_and_checkpoint_files\u001b[0;34m(folder, folds, mixed_precision, checkpoint_name)\u001b[0m\n\u001b[1;32m    138\u001b[0m         \u001b[0;32mraise\u001b[0m \u001b[0mValueError\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m\"Unknown value for folds. Type: %s. Expected: list of int, int, str or None\"\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mstr\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mtype\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mfolds\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    139\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 140\u001b[0;31m     \u001b[0mtrainer\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mrestore_model\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mjoin\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mfolds\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;36m0\u001b[0m\u001b[0;34m]\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m\"%s.model.pkl\"\u001b[0m \u001b[0;34m%\u001b[0m \u001b[0mcheckpoint_name\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mfp16\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mmixed_precision\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    141\u001b[0m     \u001b[0mtrainer\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0moutput_folder\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mfolder\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    142\u001b[0m     \u001b[0mtrainer\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0moutput_folder_base\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mfolder\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mIndexError\u001b[0m: list index out of range"
+          ]
+        }
+      ]
+    }
+  ]
+}
