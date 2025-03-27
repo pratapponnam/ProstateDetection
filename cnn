@@ -1,0 +1,363 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "gpuType": "T4",
+      "authorship_tag": "ABX9TyM+3p5Wu5vf+kWmBVvozfio",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    },
+    "accelerator": "GPU"
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/pratapponnam/ProstateDetection/blob/main/cnn\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install pydicom"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "yIBU2Sz99L8X",
+        "outputId": "600d2dfa-7a2d-4089-9794-10e1d6bed1da"
+      },
+      "execution_count": 1,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Collecting pydicom\n",
+            "  Downloading pydicom-3.0.1-py3-none-any.whl.metadata (9.4 kB)\n",
+            "Downloading pydicom-3.0.1-py3-none-any.whl (2.4 MB)\n",
+            "\u001b[?25l   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m0.0/2.4 MB\u001b[0m \u001b[31m?\u001b[0m eta \u001b[36m-:--:--\u001b[0m\r\u001b[2K   \u001b[91m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[91m╸\u001b[0m \u001b[32m2.4/2.4 MB\u001b[0m \u001b[31m118.2 MB/s\u001b[0m eta \u001b[36m0:00:01\u001b[0m\r\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m2.4/2.4 MB\u001b[0m \u001b[31m63.1 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hInstalling collected packages: pydicom\n",
+            "Successfully installed pydicom-3.0.1\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# prompt: connect to google drive\n",
+        "\n",
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "t8kZJ_Cx9ZA5",
+        "outputId": "cff4a64e-417c-4180-d4f7-a306a441149d"
+      },
+      "execution_count": 2,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Mounted at /content/drive\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "import pydicom\n",
+        "import numpy as np\n",
+        "import pandas as pd\n",
+        "import tensorflow as tf\n",
+        "from tensorflow import keras\n",
+        "from tensorflow.keras import layers\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from tensorflow.keras.utils import to_categorical\n",
+        "import matplotlib.pyplot as plt"
+      ],
+      "metadata": {
+        "id": "h_u9JQul9hDk"
+      },
+      "execution_count": 3,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 5,
+      "metadata": {
+        "id": "4LbiNeltpxtg"
+      },
+      "outputs": [],
+      "source": [
+        "# Paths to data files\n",
+        "findings_train_path = \"/content/drive/MyDrive/ProstateX-Findings-Train100.csv\"\n",
+        "images_train_path = \"/content/drive/MyDrive/ProstateX-Images-Train100.csv\"\n",
+        "dicom_dir = \"/content/drive/MyDrive/Prostate/\"  # Update this path\n",
+        "\n",
+        "# Load CSV files\n",
+        "findings_df = pd.read_csv(findings_train_path)\n",
+        "images_df = pd.read_csv(images_train_path)\n",
+        "\n",
+        "# Merge the Findings and Images data\n",
+        "merged_df = pd.merge(images_df, findings_df, on=[\"ProxID\", \"fid\"], how=\"inner\")\n",
+        "\n",
+        "# Select relevant columns\n",
+        "merged_df = merged_df[[\"ProxID\", \"fid\", \"DCMSerDescr\", \"DCMSerNum\", \"ijk\", \"ClinSig\"]]\n",
+        "merged_df[\"ClinSig\"] = merged_df[\"ClinSig\"].fillna(0).astype(int)\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import glob\n",
+        "# Function to load DICOM images based on matched series descriptions\n",
+        "def load_relevant_dicom_images(dicom_dir, merged_df, img_size=(128, 128)):\n",
+        "    images = []\n",
+        "    labels = []\n",
+        "    matched_records = 0\n",
+        "\n",
+        "    # Get all DICOM file paths using glob\n",
+        "    dicom_files = glob.glob(os.path.join(dicom_dir, \"**/*.dcm\"), recursive=True)\n",
+        "    print(f\"Found {len(dicom_files)} DICOM files.\")\n",
+        "    if len(dicom_files) == 0:\n",
+        "        print(\"No DICOM files found. Check the directory path.\")\n",
+        "        return np.array(images), np.array(labels)\n",
+        "\n",
+        "    for _, row in merged_df.iterrows():\n",
+        "        series_desc = row[\"DCMSerDescr\"]\n",
+        "        series_num = row[\"DCMSerNum\"]\n",
+        "        label = row[\"ClinSig\"]\n",
+        "\n",
+        "        matched = False  # Flag to prevent unnecessary looping\n",
+        "        for dicom_path in dicom_files:\n",
+        "            dicom = pydicom.dcmread(dicom_path)\n",
+        "\n",
+        "            if dicom.SeriesNumber == series_num and series_desc in dicom.SeriesDescription:\n",
+        "                img = dicom.pixel_array\n",
+        "                img = img.astype(np.float32)\n",
+        "                img = (img - np.min(img)) / (np.max(img) - np.min(img))\n",
+        "                img = np.expand_dims(img, axis=-1)  # Ensure 3D format (H, W, 1)\n",
+        "                img = tf.image.resize(img, img_size)\n",
+        "\n",
+        "                images.append(img.numpy())\n",
+        "                labels.append(label)\n",
+        "                matched_records += 1\n",
+        "                matched = True\n",
+        "                break  # Stop checking once a match is found\n",
+        "\n",
+        "        if not matched:\n",
+        "            print(f\"No match found for SeriesNumber {series_num} and Description {series_desc}\")\n",
+        "\n",
+        "    print(f\"Total matched records: {matched_records}\")\n",
+        "    return np.array(images), np.array(labels)"
+      ],
+      "metadata": {
+        "id": "AQybrsnjDpZu"
+      },
+      "execution_count": 6,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "# Load dataset\n",
+        "img_size = (128, 128)\n",
+        "X, y = load_relevant_dicom_images(dicom_dir, merged_df, img_size)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "J93Dt72iJAYk",
+        "outputId": "37764753-dfc9-4d68-a802-8d9ce392168d"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Found 120751 DICOM files.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# One-hot encode labels\n",
+        "y = to_categorical(y, 2)\n",
+        "\n",
+        "# Split into train and test sets\n",
+        "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n",
+        "\n",
+        "# CNN Model\n",
+        "def build_cnn_model(input_shape, num_classes):\n",
+        "    model = keras.Sequential([\n",
+        "        layers.Conv2D(32, (3,3), activation='relu', input_shape=input_shape),\n",
+        "        layers.MaxPooling2D((2,2)),\n",
+        "        layers.Conv2D(64, (3,3), activation='relu'),\n",
+        "        layers.MaxPooling2D((2,2)),\n",
+        "        layers.Conv2D(128, (3,3), activation='relu'),\n",
+        "        layers.MaxPooling2D((2,2)),\n",
+        "        layers.Flatten(),\n",
+        "        layers.Dense(128, activation='relu'),\n",
+        "        layers.Dropout(0.5),\n",
+        "        layers.Dense(num_classes, activation='softmax')\n",
+        "    ])\n",
+        "\n",
+        "    model.compile(optimizer='adam',\n",
+        "                  loss='categorical_crossentropy',\n",
+        "                  metrics=['accuracy'])\n",
+        "    return model\n",
+        "\n",
+        "# Build and train CNN model\n",
+        "model = build_cnn_model(input_shape=(128, 128, 1), num_classes=2)\n",
+        "\n",
+        "history = model.fit(X_train, y_train, epochs=10, validation_data=(X_test, y_test), batch_size=16)\n",
+        "\n",
+        "# Plot training history\n",
+        "plt.plot(history.history['accuracy'], label='Train Accuracy')\n",
+        "plt.plot(history.history['val_accuracy'], label='Validation Accuracy')\n",
+        "plt.legend()\n",
+        "plt.xlabel(\"Epochs\")\n",
+        "plt.ylabel(\"Accuracy\")\n",
+        "plt.title(\"CNN Model Performance\")\n",
+        "plt.show()\n",
+        "\n",
+        "# Save the model\n",
+        "model.save(\"/content/drive/My Drive/dicom_cnn_model.h5\")\n"
+      ],
+      "metadata": {
+        "id": "CJu3vbMD8mfm"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from tensorflow.keras.models import load_model\n",
+        "\n",
+        "# Load the trained model\n",
+        "model = load_model(\"/content/drive/My Drive/dicom_cnn_model.h5\")\n",
+        "print(\"Model loaded successfully!\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "6g3wPwRlvcgP",
+        "outputId": "fcbc9184-7562-40bb-892f-ae833bd43b51"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "WARNING:absl:Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Model loaded successfully!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pydicom\n",
+        "import numpy as np\n",
+        "import tensorflow as tf\n",
+        "\n",
+        "def preprocess_dicom(dicom_path, img_size=(128, 128)):\n",
+        "    dicom = pydicom.dcmread(dicom_path)\n",
+        "    img = dicom.pixel_array\n",
+        "\n",
+        "    # Normalize pixel values\n",
+        "    img = img.astype(np.float32)\n",
+        "    img = (img - np.min(img)) / (np.max(img) - np.min(img))\n",
+        "\n",
+        "    # Add channel dimension before resizing\n",
+        "    img = np.expand_dims(img, axis=-1)\n",
+        "\n",
+        "    # Resize image\n",
+        "    img = tf.image.resize(img, img_size).numpy()\n",
+        "\n",
+        "    # Expand dimensions for CNN input format (batch, height, width, channels)\n",
+        "    img = np.expand_dims(img, axis=0)   # Add batch dimension\n",
+        "\n",
+        "    return img\n",
+        "\n",
+        "# Example usage with a test DICOM file\n",
+        "test_dicom_path = \"/content/drive/MyDrive/Prostate/ProstateX-0027/10-28-2011-NA-MR prostaat kanker detectie NDmc MCAPRODETN-35489/3.000000-t2tsesag-55714/1-01.dcm\"\n",
+        "test_image = preprocess_dicom(test_dicom_path)\n"
+      ],
+      "metadata": {
+        "id": "hqn5PI5fviRT"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Make prediction\n",
+        "predictions = model.predict(test_image)\n",
+        "\n",
+        "# Get predicted class (0 = Not Clinically Significant, 1 = Clinically Significant)\n",
+        "predicted_class = np.argmax(predictions)\n",
+        "\n",
+        "# Print results\n",
+        "print(f\"Predicted class: {predicted_class}\")\n",
+        "print(f\"Prediction confidence: {predictions}\")\n"
+      ],
+      "metadata": {
+        "id": "QYz2T3-zwn9f",
+        "outputId": "2b806dee-2cd0-4ce4-9452-caf0763781db",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\u001b[1m1/1\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 124ms/step\n",
+            "Predicted class: 0\n",
+            "Prediction confidence: [[0.81612945 0.18387055]]\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
