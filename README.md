@@ -14,10 +14,10 @@ MONAI_3d.ipynb — 3D MONAI Attention UNet model
 data_preprocess_week_1.ipynb and DataPreprocessing_3D_CNN.ipynb — Data preprocessing notebooks
 EDA.ipynb — Exploratory Data Analysis
 
-🛠️ Setup Instructions
+Setup Instructions
 
 1. **Download Dataset**  
-   Download the ProstateX dataset from TCIA and place it in a local directory of your choice.
+   Download the ProstateX dataset from TCIA (https://www.cancerimagingarchive.net/collection/prostatex/) and place it in a local directory of your choice.
 
 2. **Update Paths**  
    Update all path variables in the notebooks (e.g., `DataPreprocessing_3D_CNN.ipynb`, `CNN_3D.ipynb`, etc.) to reflect your local directory structure.
